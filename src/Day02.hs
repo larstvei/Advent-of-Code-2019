@@ -1,5 +1,8 @@
 module Day02 where
+import Control.Lens
 import Control.Monad
+import Data.SBV
+import Data.SBV.Control
 import Data.List.Split (splitOn)
 import qualified Data.Map as M
 
@@ -19,7 +22,9 @@ exec pos tape = do
 
 solveA = exec 0 . M.insert 2 2 . M.insert 1 12
 
-solveB noun verb = exec 0 . M.insert 2 verb . M.insert 1 noun
+solveB :: SInteger -> SInteger -> SBool
+solveB noun verb = 1114711 + noun*216000 + verb .== 19690720
+                   .&& verb .< noun
 
 main :: IO ()
 main = do
@@ -29,17 +34,16 @@ main = do
     print $ join $ M.lookup 0 <$> solveA parsed
 
     -- By testing a few instances for solveB, we quickly see that the output is
-    -- increased by one whenever the noun is increased by one, and increased by
-    -- 216000 whenever the verb is increased by one. The output is 1114711 the
-    -- output when both the noun and the verb is 0. Solving the equation
+    -- increased by 216000 whenever the noun is increased by one, and increased
+    -- by one whenever the verb is increased by one. The output is 1114711 when
+    -- both the noun and the verb is 0. Solving the equation
     --
-    --     1114711 + noun + verb*216000 = 19690720
+    --     1114711 + noun*216000 + verb = 19690720
     --
-    -- over the integers, with the additional requirement of the noun being
-    -- smaller than the verb gives the solution (see extra/day02.smt2). The
-    -- additional requirement is just to avoid ridiculous solutions like the
-    -- noun being 19690720 - 1114711 = 18576009 and the verb being zero.
+    -- over the integers, with the additional requirement of the verb being
+    -- smaller than the noun gives the solution (see also extra/day02.smt2).
+    -- The additional requirement is just to get reasonably small numbers.
 
-    print $ Just $ 86 * 100 + 9
-
-    return ()
+    res <- sat solveB
+    let m = extractModel res :: Maybe (Integer, Integer)
+    print $ uncurry (+) <$> over _1 (*100) <$> m
