@@ -11,13 +11,13 @@ parse = M.fromList . zip [0..] . fmap read . splitOn ","
 
 exec :: Int -> M.Map Int Int -> Maybe (M.Map Int Int)
 exec pos tape = do
-  a <- M.lookup (pos+1) tape >>= flip M.lookup tape
-  b <- M.lookup (pos+2) tape >>= flip M.lookup tape
-  c <- M.lookup (pos+3) tape
-  case M.lookup pos tape of
-    Just 1 -> exec (pos+4) (M.insert c (a+b) tape)
-    Just 2 -> exec (pos+4) (M.insert c (a*b) tape)
-    Just 99 -> return tape
+  let look = flip M.lookup tape
+  [a, b] <- traverse (look >=> look) [pos+1, pos+2]
+  [op, c] <- traverse look [pos, pos+3]
+  case op of
+    1 -> exec (pos+4) $ M.insert c (a+b) tape
+    2 -> exec (pos+4) $ M.insert c (a*b) tape
+    99 -> return tape
     otherwise -> Nothing
 
 solveA = exec 0 . M.insert 2 2 . M.insert 1 12
