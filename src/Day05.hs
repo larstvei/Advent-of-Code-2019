@@ -10,8 +10,11 @@ import qualified Data.Map as M
 parse :: String -> M.Map Int Int
 parse = M.fromList . zip [0..] . fmap read . splitOn ","
 
-exec :: Int -> [Int] -> M.Map Int Int -> Maybe (M.Map Int Int)
-exec pos outputs tape = do
+jump True b _ = b
+jump False _ pos = pos + 3
+
+exec :: Int -> Int -> [Int] -> M.Map Int Int -> Maybe (M.Map Int Int)
+exec pos input outputs tape = do
   let iMode = flip M.lookup tape
       pMode = (iMode >=> iMode)
   inst <- iMode pos
@@ -24,17 +27,25 @@ exec pos outputs tape = do
       a <- m1 (pos + 1)
       ai <- iMode (pos + 1)
       case op of
-        3 -> exec (pos + 2) outputs $ M.insert ai 1 tape
-        4 -> exec (pos + 2) (a : outputs) tape
+        3 -> exec (pos + 2) input outputs $ M.insert ai input tape
+        4 -> exec (pos + 2) input (a : outputs) tape
         otherwise -> do
           b <- m2 (pos + 2)
-          c <- iMode (pos + 3)
           case op of
-            1 -> exec (pos + 4) outputs $ M.insert c (a + b) tape
-            2 -> exec (pos + 4) outputs $ M.insert c (a * b) tape
-            otherwise -> Nothing
+            5 -> exec (jump (a > 0) b pos) input outputs tape
+            6 -> exec (jump (a == 0) b pos) input outputs tape
+            otherwise -> do
+              c <- iMode (pos + 3)
+              case op of
+                1 -> exec (pos + 4) input outputs $ M.insert c (a + b) tape
+                2 -> exec (pos + 4) input outputs $ M.insert c (a * b) tape
+                7 -> exec (pos + 4) input outputs $ M.insert c (fromEnum $ a < b) tape
+                8 -> exec (pos + 4) input outputs $ M.insert c (fromEnum $ a == b) tape
+                otherwise -> Nothing
 
-solveA = exec 0 []
+solveA = exec 0 1 []
+
+solveB = exec 0 5 []
 
 main :: IO ()
 main = do
@@ -42,3 +53,4 @@ main = do
     let parsed = parse contents
 
     print $ join $ M.lookup (-1) <$> solveA parsed
+    print $ join $ M.lookup (-1) <$> solveB parsed
