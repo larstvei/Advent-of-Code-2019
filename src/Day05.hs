@@ -1,10 +1,6 @@
 module Day02 where
-import Control.Lens
 import Control.Monad
-import Data.SBV
-import Data.SBV.Control
 import Data.List.Split (splitOn)
-import Debug.Trace
 import qualified Data.Map as M
 
 parse :: String -> M.Map Int Int
