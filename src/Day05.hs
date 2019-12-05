@@ -1,13 +1,11 @@
 module Day02 where
 import Control.Monad
+import Data.Bool
 import Data.List.Split (splitOn)
 import qualified Data.Map as M
 
 parse :: String -> M.Map Int Int
 parse = M.fromList . zip [0..] . fmap read . splitOn ","
-
-jump True b _ = b
-jump False _ pos = pos + 3
 
 exec :: Int -> Int -> [Int] -> M.Map Int Int -> Maybe (M.Map Int Int)
 exec pos input outputs tape = do
@@ -30,8 +28,8 @@ exec pos input outputs tape = do
         otherwise -> do
           b <- m2 (pos + 2)
           case op of
-            5 -> exec (jump (a > 0) b pos) input outputs tape
-            6 -> exec (jump (a == 0) b pos) input outputs tape
+            5 -> exec (bool (pos + 3) b (a > 0)) input outputs tape
+            6 -> exec (bool (pos + 3) b (a == 0)) input outputs tape
             otherwise -> do
               c <- iMode (pos + 3)
               let recur = exec (pos + 4) input outputs
