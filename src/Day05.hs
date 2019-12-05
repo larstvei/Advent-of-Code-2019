@@ -15,12 +15,14 @@ jump False _ pos = pos + 3
 
 exec :: Int -> Int -> [Int] -> M.Map Int Int -> Maybe (M.Map Int Int)
 exec pos input outputs tape = do
+  inst <- M.lookup pos tape
   let iMode = flip M.lookup tape
       pMode = (iMode >=> iMode)
-  inst <- iMode pos
-  let op = inst `rem` 100
-      m1 = if (inst `div` 100) `rem` 10 == 1 then iMode else pMode
-      m2 = if (inst `div` 1000) `rem` 10 == 1 then iMode else pMode
+      op = inst `rem` 100
+      m1 | (inst `div` 100) `rem` 10 == 1 = iMode
+         | otherwise = pMode
+      m2 | (inst `div` 1000) `rem` 10 == 1 = iMode
+         | otherwise = pMode
   case op of
     99 -> return $ M.insert (-1) (head outputs) tape
     otherwise -> do
