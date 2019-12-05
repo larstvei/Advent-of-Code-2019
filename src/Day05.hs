@@ -38,11 +38,12 @@ exec pos input outputs tape = do
             6 -> exec (jump (a == 0) b pos) input outputs tape
             otherwise -> do
               c <- iMode (pos + 3)
+              let recur = exec (pos + 4) input outputs
               case op of
-                1 -> exec (pos + 4) input outputs $ M.insert c (a + b) tape
-                2 -> exec (pos + 4) input outputs $ M.insert c (a * b) tape
-                7 -> exec (pos + 4) input outputs $ M.insert c (fromEnum $ a < b) tape
-                8 -> exec (pos + 4) input outputs $ M.insert c (fromEnum $ a == b) tape
+                1 -> recur $ M.insert c (a + b) tape
+                2 -> recur $ M.insert c (a * b) tape
+                7 -> recur $ M.insert c (fromEnum $ a < b) tape
+                8 -> recur $ M.insert c (fromEnum $ a == b) tape
                 otherwise -> Nothing
 
 solveA = exec 0 1 []
