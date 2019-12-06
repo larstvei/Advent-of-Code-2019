@@ -7,47 +7,33 @@ import qualified Data.Map as M
 parse :: String -> M.Map Int Int
 parse = M.fromList . zip [0..] . fmap read . splitOn ","
 
+digitAtFromRight :: Int -> Int -> Int
+digitAtFromRight n d = (n `div` 10^d) `rem` 10
+
 exec :: Int -> Int -> [Int] -> M.Map Int Int -> Maybe (M.Map Int Int)
 exec pos input outputs tape = do
   inst <- M.lookup pos tape
-  let iMode = flip M.lookup tape
+  let put k v = M.insert k v tape
+      iMode = flip M.lookup tape
       pMode = (iMode >=> iMode)
-      op = inst `rem` 100
-      m1 | (inst `div` 100) `rem` 10 == 1 = iMode
-         | otherwise = pMode
-      m2 | (inst `div` 1000) `rem` 10 == 1 = iMode
-         | otherwise = pMode
-  case op of
-    99 -> return $ M.insert (-1) (head outputs) tape
-    otherwise -> do
-      a <- m1 (pos + 1)
-      ai <- iMode (pos + 1)
-      case op of
-        3 -> exec (pos + 2) input outputs $ M.insert ai input tape
-        4 -> exec (pos + 2) input (a : outputs) tape
-        otherwise -> do
-          b <- m2 (pos + 2)
-          case op of
-            5 -> exec (bool (pos + 3) b (a > 0)) input outputs tape
-            6 -> exec (bool (pos + 3) b (a == 0)) input outputs tape
-            otherwise -> do
-              c <- iMode (pos + 3)
-              let recur = exec (pos + 4) input outputs
-              case op of
-                1 -> recur $ M.insert c (a + b) tape
-                2 -> recur $ M.insert c (a * b) tape
-                7 -> recur $ M.insert c (fromEnum $ a < b) tape
-                8 -> recur $ M.insert c (fromEnum $ a == b) tape
-                otherwise -> Nothing
-
-solveA = exec 0 1 []
-
-solveB = exec 0 5 []
+      a = bool iMode pMode (digitAtFromRight inst 2 == 0) $ (pos+1)
+      b = bool iMode pMode (digitAtFromRight inst 3 == 0) $ (pos+2)
+      c = iMode (pos+3)
+  case digitAtFromRight inst 0 of
+    1 -> put <$> c <*> ((+) <$> a <*> b) >>= exec (pos + 4) input outputs
+    2 -> put <$> c <*> ((*) <$> a <*> b) >>= exec (pos + 4) input outputs
+    3 -> flip put input <$> iMode (pos + 1) >>= exec (pos + 2) input outputs
+    4 -> do o <- a ; exec (pos + 2) input (o : outputs) tape
+    5 -> do x <- a ; y <- b ; exec (bool (pos + 3) y (x > 0)) input outputs tape
+    6 -> do x <- a ; y <- b ; exec (bool (pos + 3) y (x == 0)) input outputs tape
+    7 -> put <$> c <*> (fromEnum <$> ((<) <$> a <*> b)) >>= exec (pos + 4) input outputs
+    8 -> put <$> c <*> (fromEnum <$> ((==) <$> a <*> b)) >>= exec (pos + 4) input outputs
+    9 -> return $ put (-1) (head outputs)
 
 main :: IO ()
 main = do
     contents <- readFile "input/05"
     let parsed = parse contents
 
-    print $ join $ M.lookup (-1) <$> solveA parsed
-    print $ join $ M.lookup (-1) <$> solveB parsed
+    print $ join $ M.lookup (-1) <$> exec 0 1 [] parsed
+    print $ join $ M.lookup (-1) <$> exec 0 5 [] parsed
