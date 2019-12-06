@@ -1,7 +1,9 @@
-module Day02 where
+module Day05 where
+import Control.Applicative
 import Control.Monad
 import Data.Bool
 import Data.List.Split (splitOn)
+import Safe
 import qualified Data.Map as M
 
 parse :: String -> M.Map Int Int
@@ -28,12 +30,12 @@ exec pos input outputs tape = do
     6 -> do x <- a ; y <- b ; exec (bool (pos + 3) y (x == 0)) input outputs tape
     7 -> put <$> c <*> (fromEnum <$> ((<) <$> a <*> b)) >>= exec (pos + 4) input outputs
     8 -> put <$> c <*> (fromEnum <$> ((==) <$> a <*> b)) >>= exec (pos + 4) input outputs
-    9 -> return $ put (-1) (head outputs)
+    9 -> put (-1) <$> headMay outputs
 
 main :: IO ()
 main = do
     contents <- readFile "input/05"
     let parsed = parse contents
 
-    print $ join $ M.lookup (-1) <$> exec 0 1 [] parsed
-    print $ join $ M.lookup (-1) <$> exec 0 5 [] parsed
+    print $ M.lookup (-1) =<< exec 0 1 [] parsed
+    print $ M.lookup (-1) =<< exec 0 5 [] parsed

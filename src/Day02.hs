@@ -31,7 +31,7 @@ main = do
     contents <- readFile "input/02"
     let parsed = parse contents
 
-    print $ join $ M.lookup 0 <$> solveA parsed
+    print $ M.lookup 0 =<< solveA parsed
 
     -- By testing a few instances for solveB, we quickly see that the output is
     -- increased by 216000 whenever the noun is increased by one, and increased
