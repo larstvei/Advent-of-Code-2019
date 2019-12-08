@@ -14,14 +14,14 @@ solveA = product
 
 solveB :: [[Int]] -> [Int]
 solveB = foldr1 combine
-    where combine l1 l2 = fmap (uncurry choose) $ zip l1 l2
+    where combine l1 l2 = zipWith choose l1 l2
           choose 2 x = x
           choose x _ = x
 
 pretty w h = unlines . chunksOf w . fmap f
-    where f 0 = '⬜'
-          f 1 = '⬛'
-          f 2 = '?'             -- shouldn't happen
+    where f 0 = ' '
+          f 1 = '●'
+          f _ = '?'
 
 main :: IO ()
 main = do
@@ -31,5 +31,3 @@ main = do
 
     print $ solveA parsed
     putStr $ pretty width height $ solveB parsed
-
-    return ()
